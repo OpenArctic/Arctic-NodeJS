@@ -17,7 +17,5 @@
     "node-addon-api": "^3.0.0"
   },
   "gypfile": true,
-  "devDependencies": {
-    "deasync": "^0.1.20"
-  }
+  "devDependencies": {}
 }

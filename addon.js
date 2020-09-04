@@ -24,6 +24,4 @@ addon.configure_module_path(__dirname);
     }
 })();
 
-while (true) {
-    require('deasync').sleep(100);
-}
+setInterval(function () {}, 0);
