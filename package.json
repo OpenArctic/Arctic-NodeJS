@@ -1,0 +1,23 @@
+{
+  "name": "arctic-js",
+  "version": "0.1.0",
+  "description": "Arctic's node.js wrapper library",
+  "main": "addon.js",
+  "scripts": {
+    "test": "node addon.js",
+    "link": "npm install -g ."
+  },
+  "keywords": [
+    "arctic"
+  ],
+  "author": "bluenoah1991",
+  "license": "ISC",
+  "dependencies": {
+    "bindings": "~1.2.1",
+    "node-addon-api": "^3.0.0"
+  },
+  "gypfile": true,
+  "devDependencies": {
+    "deasync": "^0.1.20"
+  }
+}
