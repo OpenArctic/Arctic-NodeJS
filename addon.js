@@ -12,11 +12,29 @@ addon.configure_module_path(__dirname);
         
         var myinstance = {};
         myinstance.foo = "bar";
+        myinstance.func = function (addon_value) {
+
+            console.log("func has been called.(" + addon_value + ")");
+        }
 
         agent.export("myinstance", myinstance);
 
         var instance = await agent.find(1, "myinstance");
-        console.log("myinstance.foo = " + instance.getProperty("foo"));
+        console.log("myinstance.foo = " + await instance.getProperty("foo"));
+        var xxx = await instance.setProperty("aaa", 123321);
+        console.log("myinstance.aaa = ", await instance.getProperty("aaa"));
+        instance.invoke("func", "hohohho");
+        var one = function() {
+
+            console.log("one event has been fired.");
+        }
+        var two = function() {
+
+            console.log("one event has been fired.");
+        }
+        instance.addEventListener("one", one);
+        instance.removeEventListener("one", two);
+        instance.fireEvent("one");
 
         var x = agent.getRoutingId();
     } catch (e) {

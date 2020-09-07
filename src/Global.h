@@ -3,7 +3,10 @@
 
 #include <Windows.h>
 
+#include <atomic>
+#include <map>
 #include <memory>
+#include <vector>
 
 #include <napi.h>
 #include "Arctic.h"
@@ -23,11 +26,14 @@ namespace arctic {
         else if (value.IsString()) {
             return Variant(value.ToString().Utf8Value());
         }
+        else {
+            return Variant(Null{});
+        }
     }
 
     inline Napi::Value Variant2NapiValue(Napi::Env& env, Variant& value) {
         if (IsNull(value)) {
-            return Napi::Value();
+            return env.Null();
         }
         else if (IsBoolean(value)) {
             return Napi::Boolean::New(env, std::get<bool>(value));
@@ -42,7 +48,7 @@ namespace arctic {
             return Napi::String::New(env, std::get<std::string>(value));
         }
         else {
-            return Napi::Value();
+            return env.Undefined();
         }
     }
 }

@@ -30,14 +30,41 @@ namespace arctic {
     }
 
     void NodeJsObjectFactoryDelegate::SetProperty(Object* instance, std::string name, Variant value) {
-
+        Handle handle = instance->GetHandle();
+        auto it = objects_.find(handle.raw_handle);
+        if (it != objects_.end()) {
+            Napi::ObjectReference* ref = it->second.get();
+            Napi::Value value_ = Variant2NapiValue(ref->Env(), value);
+            ref->Set(name, value_);
+        }
     }
 
     Variant NodeJsObjectFactoryDelegate::Invoke(Object* instance, std::string method) {
+        Handle handle = instance->GetHandle();
+        auto it = objects_.find(handle.raw_handle);
+        if (it != objects_.end()) {
+            Napi::ObjectReference* ref = it->second.get();
+            Napi::Function function = ref->Get(method).As<Napi::Function>();
+            Napi::Value result = function.Call(0, nullptr);
+            return NapiValue2Variant(result);
+        }
         return Variant(Null{});
     }
 
     Variant NodeJsObjectFactoryDelegate::Invoke(Object* instance, std::string method, std::vector<NamedVariant> params) {
+        Handle handle = instance->GetHandle();
+        auto it = objects_.find(handle.raw_handle);
+        if (it != objects_.end()) {
+            Napi::ObjectReference* ref = it->second.get();
+            Napi::Function function = ref->Get(method).As<Napi::Function>();
+            std::vector<napi_value> params_;
+            for (auto it = params.begin(); it != params.end(); ++it) {
+                Napi::Value value = Variant2NapiValue(ref->Env(), it->value);
+                params_.push_back(value);
+            }
+            Napi::Value result = function.Call(params_);
+            return NapiValue2Variant(result);
+        }
         return Variant(Null{});
     }
 
