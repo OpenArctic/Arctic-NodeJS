@@ -1,5 +1,5 @@
 {
-  "name": "arctic-js",
+  "name": "arcticjs",
   "version": "0.1.0",
   "description": "Arctic's node.js wrapper library",
   "main": "addon.js",
@@ -19,6 +19,6 @@
   "gypfile": true,
   "devDependencies": {},
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
+    "registry": "https://npm.pkg.github.com/@OpenArctic"
   }
 }
