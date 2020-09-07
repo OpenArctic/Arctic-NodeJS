@@ -49,7 +49,7 @@ namespace arctic {
         Napi::EscapableHandleScope scope(env);
         Napi::Object instance = constructor->New({});
         NObject* obj = NObject::Unwrap(instance);
-        obj->native_ = std::unique_ptr<Object>(native);
+        obj->native_ = native;
         return scope.Escape(napi_value(instance)).ToObject();
     }
 
@@ -103,7 +103,7 @@ namespace arctic {
         std::string event_type = event_type_.Utf8Value();
         Napi::Function callback = info[1].As<Napi::Function>();
         EventHandler* event_handler = new EventHandler(event_type, callback);
-        event_listeners_.push_back(std::unique_ptr<EventHandler>(event_handler));
+        event_listeners_.push_back(event_handler);
         native_->AddEventListener(event_handler);
         return Napi::Value();
     }
@@ -114,7 +114,7 @@ namespace arctic {
         Napi::Function callback = info[1].As<Napi::Function>();
         auto it = event_listeners_.begin();
         for (; it != event_listeners_.end(); ++it) {
-            EventHandler* event_handler = it->get();
+            EventHandler* event_handler = *it;
             if (event_handler->GetFunction() == callback) {
                 if (event_type == event_handler->EventType()) {
                     native_->RemoveEventListener(event_handler);
@@ -140,5 +140,14 @@ namespace arctic {
         }
         native_->FireEvent(event_type, params);
         return Napi::Value();
+    }
+
+    void NObject::Finalize(Napi::Env env) {
+        for (auto it = event_listeners_.begin(); it != event_listeners_.end(); ++it) {
+            EventHandler* event_handler = *it;
+            delete event_handler;
+        }
+        event_listeners_.clear();
+        delete native_;
     }
 }

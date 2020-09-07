@@ -38,9 +38,11 @@ namespace arctic {
 
     private:
 
-        std::unique_ptr<Object> native_;
+        void Finalize(Napi::Env env) override;
 
-        std::vector<std::unique_ptr<EventHandler>> event_listeners_;
+        Object* native_;
+
+        std::vector<EventHandler*> event_listeners_;
     };
 }
 

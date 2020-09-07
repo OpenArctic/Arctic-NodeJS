@@ -100,7 +100,7 @@ namespace arctic {
         if (hModule != NULL) {
             CreateHostAgentFunc fn = (CreateHostAgentFunc)::GetProcAddress(hModule, "CreateHostAgent");
             Agent* agent = fn(cp, nullptr);
-            instance->agent_ = std::unique_ptr<Agent>(agent);
+            instance->agent_ = agent;
             instance->InstallNodeJsObjectFactoryDelegate();
         }
 
@@ -120,7 +120,7 @@ namespace arctic {
         if (hModule != NULL) {
             CreateClientAgentFunc fn = (CreateClientAgentFunc)::GetProcAddress(hModule, "CreateClientAgent");
             Agent* agent = fn(cp, nullptr);
-            instance->agent_ = std::unique_ptr<Agent>(agent);
+            instance->agent_ = agent;
             instance->InstallNodeJsObjectFactoryDelegate();
         }
 
@@ -128,7 +128,13 @@ namespace arctic {
     }
 
     void NAgent::InstallNodeJsObjectFactoryDelegate() {
-        object_factory_delegate_ = std::make_unique<NodeJsObjectFactoryDelegate>();
-        agent_->GetObjectFactory()->AddDelegate(object_factory_delegate_.get());
+        object_factory_delegate_ = new NodeJsObjectFactoryDelegate();
+        ObjectFactory* object_factory = agent_->GetObjectFactory();
+        object_factory->AddDelegate(object_factory_delegate_);
+    }
+
+    void NAgent::Finalize(Napi::Env env) {
+        delete object_factory_delegate_;
+        delete agent_;
     }
 }

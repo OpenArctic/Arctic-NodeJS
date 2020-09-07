@@ -25,8 +25,10 @@ namespace arctic {
 
         void InstallNodeJsObjectFactoryDelegate();
 
-        std::unique_ptr<NodeJsObjectFactoryDelegate> object_factory_delegate_;
-        std::unique_ptr<Agent> agent_;
+        void Finalize(Napi::Env env) override;
+
+        NodeJsObjectFactoryDelegate* object_factory_delegate_;
+        Agent* agent_;
     };
 }
 
