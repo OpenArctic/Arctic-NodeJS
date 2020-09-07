@@ -42,4 +42,4 @@ addon.configure_module_path(__dirname);
     }
 })();
 
-setInterval(function () {}, 0);
+// setInterval(function () {}, 0);

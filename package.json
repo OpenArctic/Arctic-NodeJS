@@ -17,5 +17,8 @@
     "node-addon-api": "^3.0.0"
   },
   "gypfile": true,
-  "devDependencies": {}
+  "devDependencies": {},
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  }
 }
