@@ -1,7 +1,7 @@
 #ifndef ARCTIC_JS_ARCTIC_COMMON_H_
 #define ARCTIC_JS_ARCTIC_COMMON_H_
 
-#include <Windows.h>
+//#include <Windows.h>
 
 #include <atomic>
 #include <map>
@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <napi.h>
+#include <uv.h>
 #include "Arctic.h"
 
 namespace arctic {

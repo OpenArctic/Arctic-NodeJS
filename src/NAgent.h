@@ -2,6 +2,7 @@
 #define ARCTIC_JS_ARCTIC_NAGENT_H_
 
 #include <napi.h>
+#include <uv.h>
 #include "Arctic.h"
 #include "NodeJsObjectFactoryDelegate.h"
 
@@ -15,6 +16,10 @@ namespace arctic {
         static Napi::Object CreateClientAgent(const Napi::CallbackInfo& info, std::string& module_path);
 
     private:
+        static void IdleTask(uv_idle_t* idle);
+
+        void InstallIdleTask();
+
         Napi::Value Start(const Napi::CallbackInfo& info);
         Napi::Value Stop(const Napi::CallbackInfo& info);
 

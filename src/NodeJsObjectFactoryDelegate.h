@@ -10,6 +10,8 @@ namespace arctic {
         NodeJsObjectFactoryDelegate();
         virtual ~NodeJsObjectFactoryDelegate();
 
+        void InitThreadSafeFunction(Napi::Env env);
+
         // Inherited via ObjectFactoryDelegate
         virtual uint8_t GetType() override;
         virtual Object* Create(std::string id) override;

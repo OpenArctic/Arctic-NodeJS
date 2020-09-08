@@ -23,6 +23,7 @@ namespace arctic {
         auto it = objects_.find(handle.raw_handle);
         if (it != objects_.end()) {
             Napi::ObjectReference* ref = it->second.get();
+            Napi::HandleScope scope(ref->Env());
             Napi::Value value = ref->Get(name);
             return NapiValue2Variant(value);
         }

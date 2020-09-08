@@ -29,6 +29,8 @@ namespace arctic {
             Napi::Function::New(env, ConfigureModulePath));
         exports.Set(Napi::String::New(env, "create_host_agent"),
             Napi::Function::New(env, CreateHostAgent));
+        exports.Set(Napi::String::New(env, "create_client_agent"),
+            Napi::Function::New(env, CreateClientAgent));
 
         return exports;
     }

@@ -38,7 +38,7 @@ namespace arctic {
         Agent(AgentDelegate* delegate) : delegate_(delegate) {};
         virtual ~Agent() {};
 
-        virtual int Start() = 0;
+        virtual int Start(bool is_main_thread) = 0;
         virtual void Stop() = 0;
 
         virtual void Export(std::string id, Object* instance) = 0;
@@ -49,6 +49,9 @@ namespace arctic {
         virtual void Send(uint8_t routing_id, std::vector<NamedVariant> nvs) = 0;
 
         virtual ObjectFactory* GetObjectFactory() = 0;
+
+        // MainThreadTaskQueue
+        virtual void WorkAtIdle() = 0;
 
         uint8_t GetRoutingId() { return routing_id_; };
 

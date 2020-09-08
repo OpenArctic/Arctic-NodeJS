@@ -24,10 +24,21 @@ namespace arctic {
     NAgent::NAgent(const Napi::CallbackInfo& info) : Napi::ObjectWrap<NAgent>(info) {
     }
 
+    void NAgent::IdleTask(uv_idle_t* idle) {
+        //agent_->WorkAtIdle();
+    }
+
+    void NAgent::InstallIdleTask() {
+        uv_idle_t* idle = new uv_idle_t();
+        uv_idle_init(uv_default_loop(), idle);
+        uv_idle_start(idle, NAgent::IdleTask);
+    }
+
     Napi::Value NAgent::Start(const Napi::CallbackInfo& info) {
         Napi::Env env = info.Env();
 
-        int ret = agent_->Start();
+        int ret = agent_->Start(true);
+        InstallIdleTask();
         return Napi::Number::New(env, ret);
     }
 
