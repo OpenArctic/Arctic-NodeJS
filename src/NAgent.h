@@ -24,6 +24,7 @@ namespace arctic {
         Napi::Value Stop(const Napi::CallbackInfo& info);
 
         Napi::Value Export(const Napi::CallbackInfo& info);
+        Object* FindInternal(uint8_t routing_id, std::string id);
         Napi::Value Find(const Napi::CallbackInfo& info);
 
         Napi::Value GetRoutingId(const Napi::CallbackInfo& info);

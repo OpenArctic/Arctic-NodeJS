@@ -1,9 +1,12 @@
 #include "Global.h"
 #include "NAgent.h"
 
+#include "AsyncWorker.h"
 #include "NObject.h"
 
 namespace arctic {
+
+    Agent* global_agent_ = nullptr;
 
     Napi::Object NAgent::Init(Napi::Env env, Napi::Object exports) {
         Napi::Function constructor = DefineClass(env, "NAgent", {
@@ -25,7 +28,7 @@ namespace arctic {
     }
 
     void NAgent::IdleTask(uv_idle_t* idle) {
-        //agent_->WorkAtIdle();
+        global_agent_->WorkAtIdle();
     }
 
     void NAgent::InstallIdleTask() {
@@ -62,23 +65,34 @@ namespace arctic {
         return Napi::Value();
     }
 
+    Object* NAgent::FindInternal(uint8_t routing_id, std::string id) {
+        return agent_->Find(routing_id, id).get();
+    }
+
     Napi::Value NAgent::Find(const Napi::CallbackInfo& info)
     {
         Napi::Env env = info.Env();
-        Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
         Napi::Number routing_id_ = info[0].As<Napi::Number>();
         uint8_t routing_id = (uint8_t)routing_id_.Uint32Value();
         Napi::String id_ = info[1].As<Napi::String>();
         std::string id = id_.Utf8Value();
-        Object* instance = agent_->Find(routing_id, id).get();
-        if (instance != nullptr) {
+        if (routing_id == agent_->GetRoutingId()) {
+            // Do not use asyncworker when manipulating local objects, 
+            // it will cause V8 objects to be manipulated in a non-main thread.
+            Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
+            // Actually not blocked
+            Object* instance = agent_->Find(routing_id, id).get();
             Napi::Object obj = NObject::NewInstance(env, instance);
             deferred.Resolve(obj);
+            return deferred.Promise();
         }
         else {
-            deferred.Reject(Napi::Value());
+            std::function<Object* ()> fn = std::bind(&NAgent::FindInternal, this, routing_id, id);
+            PromiseWorker<Object*>* worker = new PromiseWorker<Object*>(env, fn);
+            auto promise = worker->GetPromise();
+            worker->Queue();
+            return promise;
         }
-        return deferred.Promise();
     }
 
     Napi::Value NAgent::GetRoutingId(const Napi::CallbackInfo& info)
@@ -110,8 +124,8 @@ namespace arctic {
         HMODULE hModule = ::LoadLibrary(library_path.c_str());
         if (hModule != NULL) {
             CreateHostAgentFunc fn = (CreateHostAgentFunc)::GetProcAddress(hModule, "CreateHostAgent");
-            Agent* agent = fn(cp, nullptr);
-            instance->agent_ = agent;
+            global_agent_ = fn(cp, nullptr);
+            instance->agent_ = global_agent_;
             instance->InstallNodeJsObjectFactoryDelegate();
         }
 
@@ -130,8 +144,8 @@ namespace arctic {
         HMODULE hModule = ::LoadLibrary(library_path.c_str());
         if (hModule != NULL) {
             CreateClientAgentFunc fn = (CreateClientAgentFunc)::GetProcAddress(hModule, "CreateClientAgent");
-            Agent* agent = fn(cp, nullptr);
-            instance->agent_ = agent;
+            global_agent_ = fn(cp, nullptr);
+            instance->agent_ = global_agent_;
             instance->InstallNodeJsObjectFactoryDelegate();
         }
 

@@ -35,6 +35,7 @@ namespace arctic {
         auto it = objects_.find(handle.raw_handle);
         if (it != objects_.end()) {
             Napi::ObjectReference* ref = it->second.get();
+            Napi::HandleScope scope(ref->Env());
             Napi::Value value_ = Variant2NapiValue(ref->Env(), value);
             ref->Set(name, value_);
         }
@@ -45,6 +46,7 @@ namespace arctic {
         auto it = objects_.find(handle.raw_handle);
         if (it != objects_.end()) {
             Napi::ObjectReference* ref = it->second.get();
+            Napi::HandleScope scope(ref->Env());
             Napi::Function function = ref->Get(method).As<Napi::Function>();
             Napi::Value result = function.Call(0, nullptr);
             return NapiValue2Variant(result);
@@ -57,6 +59,7 @@ namespace arctic {
         auto it = objects_.find(handle.raw_handle);
         if (it != objects_.end()) {
             Napi::ObjectReference* ref = it->second.get();
+            Napi::HandleScope scope(ref->Env());
             Napi::Function function = ref->Get(method).As<Napi::Function>();
             std::vector<napi_value> params_;
             for (auto it = params.begin(); it != params.end(); ++it) {

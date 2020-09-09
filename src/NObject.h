@@ -27,9 +27,12 @@ namespace arctic {
 
         static Napi::Object NewInstance(Napi::Env env, Object* native);
 
+        Variant GetPropertyInternal(std::string name);
         Napi::Value GetProperty(const Napi::CallbackInfo& info);
+        Variant SetPropertyInternal(std::string name, Variant value);
         Napi::Value SetProperty(const Napi::CallbackInfo& info);
 
+        Variant InvokeInternal(std::string method, std::vector<NamedVariant> params);
         Napi::Value Invoke(const Napi::CallbackInfo& info);
 
         Napi::Value AddEventListener(const Napi::CallbackInfo& info);

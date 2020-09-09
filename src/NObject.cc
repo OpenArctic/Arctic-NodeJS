@@ -1,6 +1,8 @@
 #include "Global.h"
 #include "NObject.h"
 
+#include "AsyncWorker.h"
+
 namespace arctic {
 
     Napi::FunctionReference* constructor;
@@ -53,49 +55,96 @@ namespace arctic {
         return scope.Escape(napi_value(instance)).ToObject();
     }
 
+    Variant NObject::GetPropertyInternal(std::string name) {
+        return native_->GetProperty(name).get();
+    }
+
     Napi::Value NObject::GetProperty(const Napi::CallbackInfo& info) {
         Napi::Env env = info.Env();
-        Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
         Napi::String name_ = info[0].As<Napi::String>();
         std::string name = name_.Utf8Value();
-        Variant value = native_->GetProperty(name).get();
-        deferred.Resolve(Variant2NapiValue(info.Env(), value));
-        return deferred.Promise();
+        if (native_->IsLocal()) {
+            // Do not use asyncworker when manipulating local objects, 
+            // it will cause V8 objects to be manipulated in a non-main thread.
+            Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
+            // Actually not blocked
+            Variant value = native_->GetProperty(name).get();
+            Napi::Value napi_value = Variant2NapiValue(env, value);
+            deferred.Resolve(napi_value);
+            return deferred.Promise();
+        }
+        else {
+            std::function<Variant()> fn = std::bind(&NObject::GetPropertyInternal, this, name);
+            PromiseWorker<Variant>* worker = new PromiseWorker<Variant>(env, fn);
+            auto promise = worker->GetPromise();
+            worker->Queue();
+            return promise;
+        }
+    }
+
+    Variant NObject::SetPropertyInternal(std::string name, Variant value) {
+        native_->SetProperty(name, value).get();
+        return Variant(Null{});
     }
 
     Napi::Value NObject::SetProperty(const Napi::CallbackInfo& info) {
         Napi::Env env = info.Env();
-        Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
         Napi::String name_ = info[0].As<Napi::String>();
         std::string name = name_.Utf8Value();
         Napi::Value value_ = info[1];
         Variant value = NapiValue2Variant(value_);
-        native_->SetProperty(name, value).get();
-        deferred.Resolve(env.Undefined());
-        return deferred.Promise();
+        if (native_->IsLocal()) {
+            // Do not use asyncworker when manipulating local objects, 
+            // it will cause V8 objects to be manipulated in a non-main thread.
+            Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
+            // Actually not blocked
+            native_->SetProperty(name, value).get();
+            deferred.Resolve(env.Undefined());
+            return deferred.Promise();
+        }
+        else {
+            std::function<Variant()> fn = std::bind(&NObject::SetPropertyInternal, this, name, value);
+            PromiseWorker<Variant>* worker = new PromiseWorker<Variant>(env, fn);
+            auto promise = worker->GetPromise();
+            worker->Queue();
+            return promise;
+        }
+    }
+
+    Variant NObject::InvokeInternal(std::string method, std::vector<NamedVariant> params) {
+        return native_->Invoke(method, params).get();
     }
 
     Napi::Value NObject::Invoke(const Napi::CallbackInfo& info) {
         Napi::Env env = info.Env();
-        Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
         Napi::String method_ = info[0].As<Napi::String>();
         std::string method = method_.Utf8Value();
+        std::vector<NamedVariant> params;
         if (info.Length() > 1) {
             // Has parameters
-            std::vector<NamedVariant> params;
             for (int i = 1; i < info.Length(); i++) {
                 Napi::Value param_ = info[i];
                 Variant param = NapiValue2Variant(param_);
                 params.push_back({ "", param });
             }
-            Variant result = native_->Invoke(method, params).get();
-            deferred.Resolve(Variant2NapiValue(env, result));
+        }
+        if (native_->IsLocal()) {
+            // Do not use asyncworker when manipulating local objects, 
+            // it will cause V8 objects to be manipulated in a non-main thread.
+            Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
+            // Actually not blocked
+            Variant return_value = native_->Invoke(method, params).get();
+            Napi::Value napi_value = Variant2NapiValue(env, return_value);
+            deferred.Resolve(napi_value);
+            return deferred.Promise();
         }
         else {
-            Variant result = native_->Invoke(method).get();
-            deferred.Resolve(Variant2NapiValue(env, result));
+            std::function<Variant()> fn = std::bind(&NObject::InvokeInternal, this, method, params);
+            PromiseWorker<Variant>* worker = new PromiseWorker<Variant>(env, fn);
+            auto promise = worker->GetPromise();
+            worker->Queue();
+            return promise;
         }
-        return deferred.Promise();
     }
 
     Napi::Value NObject::AddEventListener(const Napi::CallbackInfo& info) {
