@@ -1,6 +1,6 @@
 {
   "name": "arcticjs",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Arctic's node.js wrapper library",
   "main": "addon.js",
   "scripts": {
