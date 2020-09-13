@@ -6,8 +6,6 @@
 
 namespace arctic {
 
-    Agent* global_agent_ = nullptr;
-
     Napi::Object NAgent::Init(Napi::Env env, Napi::Object exports) {
         Napi::Function constructor = DefineClass(env, "NAgent", {
             InstanceMethod<&NAgent::Start>("start"),
@@ -24,17 +22,20 @@ namespace arctic {
         return exports;
     }
 
-    NAgent::NAgent(const Napi::CallbackInfo& info) : Napi::ObjectWrap<NAgent>(info) {
+    NAgent::NAgent(const Napi::CallbackInfo& info) :
+        Napi::ObjectWrap<NAgent>(info), main_loop_handle_(nullptr) {
     }
 
     void NAgent::IdleTask(uv_idle_t* idle) {
-        global_agent_->WorkAtIdle();
+        Agent* agent = (Agent*)(idle->data);
+        agent->WorkAtIdle();
     }
 
     void NAgent::InstallIdleTask() {
-        uv_idle_t* idle = new uv_idle_t();
-        uv_idle_init(uv_default_loop(), idle);
-        uv_idle_start(idle, NAgent::IdleTask);
+        main_loop_handle_ = new uv_idle_t();
+        main_loop_handle_->data = (void*)(agent_);
+        uv_idle_init(uv_default_loop(), main_loop_handle_);
+        uv_idle_start(main_loop_handle_, NAgent::IdleTask);
     }
 
     Napi::Value NAgent::Start(const Napi::CallbackInfo& info) {
@@ -48,6 +49,10 @@ namespace arctic {
     Napi::Value NAgent::Stop(const Napi::CallbackInfo& info)
     {
         agent_->Stop();
+        if (main_loop_handle_) {
+            uv_idle_stop(main_loop_handle_);
+            main_loop_handle_ = nullptr;
+        }
         return Napi::Value();
     }
 
@@ -124,8 +129,8 @@ namespace arctic {
         HMODULE hModule = ::LoadLibrary(library_path.c_str());
         if (hModule != NULL) {
             CreateHostAgentFunc fn = (CreateHostAgentFunc)::GetProcAddress(hModule, "CreateHostAgent");
-            global_agent_ = fn(cp, nullptr);
-            instance->agent_ = global_agent_;
+            Agent* agent = fn(cp, nullptr);
+            instance->agent_ = agent;
             instance->InstallNodeJsObjectFactoryDelegate();
         }
 
@@ -144,8 +149,8 @@ namespace arctic {
         HMODULE hModule = ::LoadLibrary(library_path.c_str());
         if (hModule != NULL) {
             CreateClientAgentFunc fn = (CreateClientAgentFunc)::GetProcAddress(hModule, "CreateClientAgent");
-            global_agent_ = fn(cp, nullptr);
-            instance->agent_ = global_agent_;
+            Agent* agent = fn(cp, nullptr);
+            instance->agent_ = agent;
             instance->InstallNodeJsObjectFactoryDelegate();
         }
 

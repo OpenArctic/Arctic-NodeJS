@@ -33,6 +33,8 @@ namespace arctic {
 
         void Finalize(Napi::Env env) override;
 
+        uv_idle_t* main_loop_handle_;
+
         NodeJsObjectFactoryDelegate* object_factory_delegate_;
         Agent* agent_;
     };
