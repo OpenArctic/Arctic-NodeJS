@@ -32,7 +32,7 @@ namespace arctic {
         Variant SetPropertyInternal(std::string name, Variant value);
         Napi::Value SetProperty(const Napi::CallbackInfo& info);
 
-        Variant InvokeInternal(std::string method, std::vector<NamedVariant> params);
+        MaybeError<Variant> InvokeInternal(std::string method, std::vector<NamedVariant> params);
         Napi::Value Invoke(const Napi::CallbackInfo& info);
 
         Napi::Value AddEventListener(const Napi::CallbackInfo& info);

@@ -98,12 +98,47 @@ namespace arctic {
     inline bool IsString(Variant var) { return var.index() == VariantType::String; }
     inline bool IsHandle(Variant var) { return var.index() == VariantType::HandleType; }
 
+    inline Variant NewVariant() { return Variant(); }
+
     inline VariantType GetVariantType(const Variant& var) { return (VariantType)var.index(); }
+
+    typedef struct Error {
+        int32_t code;
+        std::string msg;
+
+        Error() : code(0) {}
+
+        Error(std::string m) : code(-1), msg(m) {}
+        Error(int32_t c, std::string m) : code(c), msg(m) {}
+
+        bool IsError() {
+            return code != 0;
+        }
+    } Error;
+
+    inline bool IsError(Error& err) { return err.code != 0; }
+
+    template<typename T>
+    struct MaybeError {
+        Error err;
+        T value;
+
+        MaybeError() {}
+
+        MaybeError(Error e) : err(e) {}
+        MaybeError(T v) : value(v) {}
+
+        bool IsError() {
+            return err.code != 0;
+        }
+    };
 
     typedef struct NamedVariant {
         std::string name;
         Variant value;
     } NamedVariant;
+
+    typedef std::vector<NamedVariant> NamedVariants;
 
     //typedef struct NVPacket {
     //    uint8_t type;

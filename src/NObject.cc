@@ -111,7 +111,7 @@ namespace arctic {
         }
     }
 
-    Variant NObject::InvokeInternal(std::string method, std::vector<NamedVariant> params) {
+    MaybeError<Variant> NObject::InvokeInternal(std::string method, std::vector<NamedVariant> params) {
         return native_->Invoke(method, params).get();
     }
 
@@ -133,14 +133,20 @@ namespace arctic {
             // it will cause V8 objects to be manipulated in a non-main thread.
             Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
             // Actually not blocked
-            Variant return_value = native_->Invoke(method, params).get();
-            Napi::Value napi_value = Variant2NapiValue(env, return_value);
-            deferred.Resolve(napi_value);
+            MaybeError<Variant> return_value = native_->Invoke(method, params).get();
+            if (return_value.IsError()) {
+                Napi::String err_msg = Napi::String::New(env, return_value.err.msg);
+                deferred.Reject(err_msg);
+            }
+            else {
+                Napi::Value napi_value = Variant2NapiValue(env, return_value.value);
+                deferred.Resolve(napi_value);
+            }
             return deferred.Promise();
         }
         else {
-            std::function<Variant()> fn = std::bind(&NObject::InvokeInternal, this, method, params);
-            PromiseWorker<Variant>* worker = new PromiseWorker<Variant>(env, fn);
+            std::function<MaybeError<Variant>()> fn = std::bind(&NObject::InvokeInternal, this, method, params);
+            PromiseWorker<MaybeError<Variant>>* worker = new PromiseWorker<MaybeError<Variant>>(env, fn);
             auto promise = worker->GetPromise();
             worker->Queue();
             return promise;

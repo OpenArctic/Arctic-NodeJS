@@ -41,7 +41,7 @@ namespace arctic {
         }
     }
 
-    Variant NodeJsObjectFactoryDelegate::Invoke(Object* instance, std::string method) {
+    MaybeError<Variant> NodeJsObjectFactoryDelegate::Invoke(Object* instance, std::string method) {
         Handle handle = instance->GetHandle();
         auto it = objects_.find(handle.raw_handle);
         if (it != objects_.end()) {
@@ -49,12 +49,18 @@ namespace arctic {
             Napi::HandleScope scope(ref->Env());
             Napi::Function function = ref->Get(method).As<Napi::Function>();
             Napi::Value result = function.Call(0, nullptr);
-            return NapiValue2Variant(result);
+            if (ref->Env().IsExceptionPending()) {
+                Napi::Error e = ref->Env().GetAndClearPendingException();
+                Error err(e.Message());
+                return MaybeError<Variant>(err);
+            }
+            Variant value = NapiValue2Variant(result);
+            return MaybeError<Variant>(value);
         }
-        return Variant(Null{});
+        return MaybeError<Variant>();
     }
 
-    Variant NodeJsObjectFactoryDelegate::Invoke(Object* instance, std::string method, std::vector<NamedVariant> params) {
+    MaybeError<Variant> NodeJsObjectFactoryDelegate::Invoke(Object* instance, std::string method, std::vector<NamedVariant> params) {
         Handle handle = instance->GetHandle();
         auto it = objects_.find(handle.raw_handle);
         if (it != objects_.end()) {
@@ -67,9 +73,15 @@ namespace arctic {
                 params_.push_back(value);
             }
             Napi::Value result = function.Call(params_);
-            return NapiValue2Variant(result);
+            if (ref->Env().IsExceptionPending()) {
+                Napi::Error e = ref->Env().GetAndClearPendingException();
+                Error err(e.Message());
+                return MaybeError<Variant>(err);
+            }
+            Variant value = NapiValue2Variant(result);
+            return MaybeError<Variant>(value);
         }
-        return Variant(Null{});
+        return MaybeError<Variant>();
     }
 
     uint64_t NodeJsObjectFactoryDelegate::RegisterObject(Napi::Object obj) {

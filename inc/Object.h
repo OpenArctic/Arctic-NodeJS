@@ -28,8 +28,8 @@ namespace arctic {
         virtual Variant GetProperty(Object* instance, std::string name) = 0;
         virtual void SetProperty(Object* instance, std::string name, Variant value) = 0;
 
-        virtual Variant Invoke(Object* instance, std::string method) = 0;
-        virtual Variant Invoke(Object* instance, std::string method, std::vector<NamedVariant> params) = 0;
+        virtual MaybeError<Variant> Invoke(Object* instance, std::string method) = 0;
+        virtual MaybeError<Variant> Invoke(Object* instance, std::string method, std::vector<NamedVariant> params) = 0;
 
         ObjectFactory* object_factory_;
 
@@ -61,8 +61,8 @@ namespace arctic {
         virtual Variant GetProperty(Object* instance, std::string name) = 0;
         virtual void SetProperty(Object* instance, std::string name, Variant value) = 0;
 
-        virtual Variant Invoke(Object* instance, std::string method) = 0;
-        virtual Variant Invoke(Object* instance, std::string method, std::vector<NamedVariant> params) = 0;
+        virtual MaybeError<Variant> Invoke(Object* instance, std::string method) = 0;
+        virtual MaybeError<Variant> Invoke(Object* instance, std::string method, std::vector<NamedVariant> params) = 0;
     };
 
     class ObjectEventListener {
@@ -95,8 +95,8 @@ namespace arctic {
         virtual std::future<Variant> GetProperty(std::string name) = 0;
         virtual std::future<void> SetProperty(std::string name, Variant value) = 0;
 
-        virtual std::future<Variant> Invoke(std::string method) = 0;
-        virtual std::future<Variant> Invoke(std::string method, std::vector<NamedVariant> params) = 0;
+        virtual std::future<MaybeError<Variant>> Invoke(std::string method) = 0;
+        virtual std::future<MaybeError<Variant>> Invoke(std::string method, std::vector<NamedVariant> params) = 0;
 
         virtual void AddEventListener(ObjectEventListener* listener) = 0;
         virtual void RemoveEventListener(ObjectEventListener* listener) = 0;

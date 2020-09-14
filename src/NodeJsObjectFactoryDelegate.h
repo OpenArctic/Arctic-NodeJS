@@ -17,8 +17,8 @@ namespace arctic {
         virtual Object* Create(std::string id) override;
         virtual Variant GetProperty(Object* instance, std::string name) override;
         virtual void SetProperty(Object* instance, std::string name, Variant value) override;
-        virtual Variant Invoke(Object* instance, std::string method) override;
-        virtual Variant Invoke(Object* instance, std::string method, std::vector<NamedVariant> params) override;
+        virtual MaybeError<Variant> Invoke(Object* instance, std::string method) override;
+        virtual MaybeError<Variant> Invoke(Object* instance, std::string method, std::vector<NamedVariant> params) override;
 
         uint64_t RegisterObject(Napi::Object obj);
         Napi::Object FindObject(uint64_t handle);
