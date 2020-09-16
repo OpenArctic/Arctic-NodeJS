@@ -92,7 +92,7 @@ namespace arctic {
             return deferred.Promise();
         }
         else {
-            std::function<Object* ()> fn = std::bind(&NAgent::FindInternal, this, routing_id, id);
+            std::function<Object * ()> fn = std::bind(&NAgent::FindInternal, this, routing_id, id);
             PromiseWorker<Object*>* worker = new PromiseWorker<Object*>(env, fn);
             auto promise = worker->GetPromise();
             worker->Queue();

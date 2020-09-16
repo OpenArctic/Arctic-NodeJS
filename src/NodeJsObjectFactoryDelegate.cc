@@ -48,7 +48,7 @@ namespace arctic {
             Napi::ObjectReference* ref = it->second.get();
             Napi::HandleScope scope(ref->Env());
             Napi::Function function = ref->Get(method).As<Napi::Function>();
-            Napi::Value result = function.Call(0, nullptr);
+            Napi::Value result = function.Call(ref->Value(), 0, nullptr);
             if (ref->Env().IsExceptionPending()) {
                 Napi::Error e = ref->Env().GetAndClearPendingException();
                 Error err(e.Message());
@@ -72,7 +72,7 @@ namespace arctic {
                 Napi::Value value = Variant2NapiValue(ref->Env(), it->value);
                 params_.push_back(value);
             }
-            Napi::Value result = function.Call(params_);
+            Napi::Value result = function.Call(ref->Value(), params_);
             if (ref->Env().IsExceptionPending()) {
                 Napi::Error e = ref->Env().GetAndClearPendingException();
                 Error err(e.Message());

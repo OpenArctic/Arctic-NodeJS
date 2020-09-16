@@ -1,11 +1,12 @@
 {
   "name": "arcticjs",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Arctic's node.js wrapper library",
   "main": "addon.js",
   "scripts": {
     "test": "node addon.js",
-    "link": "npm install -g ."
+    "g": "npm link .",
+    "build": "node-gyp build"
   },
   "keywords": [
     "arctic"
