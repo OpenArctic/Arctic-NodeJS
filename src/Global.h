@@ -14,6 +14,30 @@
 
 namespace arctic {
 
+    class AddonInstanceContext {
+    public:
+        AddonInstanceContext() {};
+        virtual ~AddonInstanceContext() {};
+
+        void AddConstructor(std::string name, Napi::FunctionReference* ref) {
+            if (ref == nullptr) {
+                return;
+            }
+            constructors[name] = std::unique_ptr<Napi::FunctionReference>(ref);
+        }
+
+        Napi::FunctionReference* GetConstructor(std::string name) {
+            auto it = constructors.find(name);
+            if (it == constructors.end()) {
+                return nullptr;
+            }
+            return it->second.get();
+        }
+
+    private:
+        std::map<std::string, std::unique_ptr<Napi::FunctionReference>> constructors;
+    };
+
     inline Variant NapiValue2Variant(Napi::Value& value) {
         if (value.IsNull()) {
             return Variant(Null{});

@@ -7,7 +7,7 @@
 namespace arctic {
 
     Napi::Object NAgent::Init(Napi::Env env, Napi::Object exports) {
-        Napi::Function constructor = DefineClass(env, "NAgent", {
+        Napi::Function func = DefineClass(env, "NAgent", {
             InstanceMethod<&NAgent::Start>("start"),
             InstanceMethod<&NAgent::Stop>("stop"),
             InstanceMethod<&NAgent::Export>("export"),
@@ -15,10 +15,14 @@ namespace arctic {
             InstanceMethod<&NAgent::GetRoutingId>("getRoutingId"),
             });
 
-        Napi::Object obj = constructor.New({});
-        Napi::ObjectReference* ref = new Napi::ObjectReference();
-        *ref = Napi::Persistent(obj);
-        env.SetInstanceData(ref);
+        Napi::FunctionReference* ref = new Napi::FunctionReference();
+        *ref = Napi::Persistent(func);
+        AddonInstanceContext* ctx = env.GetInstanceData<AddonInstanceContext>();
+        if (ctx == nullptr) {
+            ctx = new AddonInstanceContext();
+            env.SetInstanceData(ctx);
+        }
+        ctx->AddConstructor("NAgent", ref);
         return exports;
     }
 
@@ -28,7 +32,9 @@ namespace arctic {
 
     void NAgent::IdleTask(uv_idle_t* idle) {
         Agent* agent = (Agent*)(idle->data);
-        agent->WorkAtIdle();
+        if (agent != nullptr) {
+            agent->WorkAtIdle();
+        }
     }
 
     void NAgent::InstallIdleTask() {
@@ -92,7 +98,7 @@ namespace arctic {
             return deferred.Promise();
         }
         else {
-            std::function<Object * ()> fn = std::bind(&NAgent::FindInternal, this, routing_id, id);
+            std::function<Object* ()> fn = std::bind(&NAgent::FindInternal, this, routing_id, id);
             PromiseWorker<Object*>* worker = new PromiseWorker<Object*>(env, fn);
             auto promise = worker->GetPromise();
             worker->Queue();
@@ -110,6 +116,7 @@ namespace arctic {
 
     Napi::Object NAgent::CreateHostAgent(const Napi::CallbackInfo& info, std::string& module_path)
     {
+        Napi::Env env = info.Env();
         HostAgentCreateParams cp;
         Napi::Number routing_id_ = info[0].As<Napi::Number>();
         cp.routing_id = (uint8_t)routing_id_.Uint32Value();
@@ -122,8 +129,10 @@ namespace arctic {
             std::string cmdline = process_info.Get("cmdline").ToString().Utf8Value();
             cp.child_processes_info[routing_id] = cmdline;
         }
-        Napi::ObjectReference* ref = info.Env().GetInstanceData<Napi::ObjectReference>();
-        NAgent* instance = NAgent::Unwrap(ref->Value());
+        AddonInstanceContext* ctx = env.GetInstanceData<AddonInstanceContext>();
+        Napi::FunctionReference* constructor = ctx->GetConstructor("NAgent");
+        Napi::Object obj = constructor->New({});
+        NAgent* instance = NAgent::Unwrap(obj);
 
         std::string library_path = module_path + "/lib/Arctic.dll";
         HMODULE hModule = ::LoadLibrary(library_path.c_str());
@@ -134,16 +143,19 @@ namespace arctic {
             instance->InstallNodeJsObjectFactoryDelegate();
         }
 
-        return ref->Value();
+        return obj;
     }
 
     Napi::Object NAgent::CreateClientAgent(const Napi::CallbackInfo& info, std::string& module_path)
     {
+        Napi::Env env = info.Env();
         ClientAgentCreateParams cp;
         Napi::Number routing_id_ = info[0].As<Napi::Number>();
         cp.routing_id = (uint8_t)routing_id_.Uint32Value();
-        Napi::ObjectReference* ref = info.Env().GetInstanceData<Napi::ObjectReference>();
-        NAgent* instance = NAgent::Unwrap(ref->Value());
+        AddonInstanceContext* ctx = env.GetInstanceData<AddonInstanceContext>();
+        Napi::FunctionReference* constructor = ctx->GetConstructor("NAgent");
+        Napi::Object obj = constructor->New({});
+        NAgent* instance = NAgent::Unwrap(obj);
 
         std::string library_path = module_path + "/lib/Arctic.dll";
         HMODULE hModule = ::LoadLibrary(library_path.c_str());
@@ -154,17 +166,17 @@ namespace arctic {
             instance->InstallNodeJsObjectFactoryDelegate();
         }
 
-        return ref->Value();
+        return obj;
     }
 
     void NAgent::InstallNodeJsObjectFactoryDelegate() {
-        object_factory_delegate_ = new NodeJsObjectFactoryDelegate();
+        object_factory_delegate_ = new NodeJsOFDelegate();
         ObjectFactory* object_factory = agent_->GetObjectFactory();
         object_factory->AddDelegate(object_factory_delegate_);
     }
 
     void NAgent::Finalize(Napi::Env env) {
-        delete object_factory_delegate_;
+        agent_->Stop();
         delete agent_;
     }
 }

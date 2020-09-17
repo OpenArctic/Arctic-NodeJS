@@ -1,14 +1,14 @@
-#ifndef ARCTIC_JS_ARCTIC_NODEJSOBJECTFACTORYDELEGATE_H_
-#define ARCTIC_JS_ARCTIC_NODEJSOBJECTFACTORYDELEGATE_H_
+#ifndef ARCTIC_JS_ARCTIC_NODEJS_OF_DELEGATE_H_
+#define ARCTIC_JS_ARCTIC_NODEJS_OF_DELEGATE_H_
 
 #include <napi.h>
 #include "Arctic.h"
 
 namespace arctic {
-    class NodeJsObjectFactoryDelegate : public ObjectFactoryDelegate {
+    class NodeJsOFDelegate : public ObjectFactoryDelegate {
     public:
-        NodeJsObjectFactoryDelegate();
-        virtual ~NodeJsObjectFactoryDelegate();
+        NodeJsOFDelegate();
+        virtual ~NodeJsOFDelegate();
 
         void InitThreadSafeFunction(Napi::Env env);
 
@@ -31,4 +31,4 @@ namespace arctic {
     };
 }
 
-#endif // ARCTIC_JS_ARCTIC_NODEJSOBJECTFACTORYDELEGATE_H_
+#endif // ARCTIC_JS_ARCTIC_NODEJS_OF_DELEGATE_H_

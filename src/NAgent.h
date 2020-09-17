@@ -4,13 +4,14 @@
 #include <napi.h>
 #include <uv.h>
 #include "Arctic.h"
-#include "NodeJsObjectFactoryDelegate.h"
+#include "NodeJsOFDelegate.h"
 
 namespace arctic {
     class NAgent : public Napi::ObjectWrap<NAgent> {
     public:
         static Napi::Object Init(Napi::Env env, Napi::Object exports);
         NAgent(const Napi::CallbackInfo& info);
+        virtual ~NAgent() {};
 
         static Napi::Object CreateHostAgent(const Napi::CallbackInfo& info, std::string& module_path);
         static Napi::Object CreateClientAgent(const Napi::CallbackInfo& info, std::string& module_path);
@@ -35,7 +36,7 @@ namespace arctic {
 
         uv_idle_t* main_loop_handle_;
 
-        NodeJsObjectFactoryDelegate* object_factory_delegate_;
+        NodeJsOFDelegate* object_factory_delegate_;
         Agent* agent_;
     };
 }

@@ -5,8 +5,6 @@
 
 namespace arctic {
 
-    Napi::FunctionReference* constructor;
-
     Napi::Object NObject::Init(Napi::Env env, Napi::Object exports) {
         Napi::Function func = DefineClass(env, "NObject", {
             InstanceMethod<&NObject::GetProperty>("getProperty"),
@@ -19,7 +17,12 @@ namespace arctic {
 
         Napi::FunctionReference* ref = new Napi::FunctionReference();
         *ref = Napi::Persistent(func);
-        constructor = ref;
+        AddonInstanceContext* ctx = env.GetInstanceData<AddonInstanceContext>();
+        if (ctx == nullptr) {
+            ctx = new AddonInstanceContext();
+            env.SetInstanceData(ctx);
+        }
+        ctx->AddConstructor("NObject", ref);
         return exports;
     }
 
@@ -49,10 +52,12 @@ namespace arctic {
 
     Napi::Object NObject::NewInstance(Napi::Env env, Object* native) {
         Napi::EscapableHandleScope scope(env);
-        Napi::Object instance = constructor->New({});
-        NObject* obj = NObject::Unwrap(instance);
-        obj->native_ = native;
-        return scope.Escape(napi_value(instance)).ToObject();
+        AddonInstanceContext* ctx = env.GetInstanceData<AddonInstanceContext>();
+        Napi::FunctionReference* constructor = ctx->GetConstructor("NObject");
+        Napi::Object obj = constructor->New({});
+        NObject* instance = NObject::Unwrap(obj);
+        instance->native_ = native;
+        return scope.Escape(napi_value(obj)).ToObject();
     }
 
     Variant NObject::GetPropertyInternal(std::string name) {

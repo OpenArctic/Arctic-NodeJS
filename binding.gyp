@@ -12,7 +12,7 @@
       "msvs_settings": {
         "VCCLCompilerTool": { "ExceptionHandling": 1, "AdditionalOptions": [ "-std:c++17" ] },
       },
-      "sources": [ "src/Arctic.cc", "src/NAgent.cc", "src/NObject.cc", "src/AsyncWorker.cc", "src/NodeJsObjectFactoryDelegate.cc" ],
+      "sources": [ "src/Arctic.cc", "src/NAgent.cc", "src/NObject.cc", "src/AsyncWorker.cc", "src/NodeJsOFDelegate.cc" ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
         "inc"

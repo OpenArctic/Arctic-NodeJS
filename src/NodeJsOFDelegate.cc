@@ -1,24 +1,24 @@
 #include "Global.h"
-#include "NodeJsObjectFactoryDelegate.h"
+#include "NodeJsOFDelegate.h"
 
 namespace arctic {
-    NodeJsObjectFactoryDelegate::NodeJsObjectFactoryDelegate() : next_handle_(0) {
+    NodeJsOFDelegate::NodeJsOFDelegate() : next_handle_(0) {
 
     }
 
-    NodeJsObjectFactoryDelegate::~NodeJsObjectFactoryDelegate() {
+    NodeJsOFDelegate::~NodeJsOFDelegate() {
 
     }
 
-    uint8_t NodeJsObjectFactoryDelegate::GetType() {
+    uint8_t NodeJsOFDelegate::GetType() {
         return 2;
     }
 
-    Object* NodeJsObjectFactoryDelegate::Create(std::string id) {
+    Object* NodeJsOFDelegate::Create(std::string id) {
         return nullptr;
     }
 
-    Variant NodeJsObjectFactoryDelegate::GetProperty(Object* instance, std::string name) {
+    Variant NodeJsOFDelegate::GetProperty(Object* instance, std::string name) {
         Handle handle = instance->GetHandle();
         auto it = objects_.find(handle.raw_handle);
         if (it != objects_.end()) {
@@ -30,7 +30,7 @@ namespace arctic {
         return Variant(Null{});
     }
 
-    void NodeJsObjectFactoryDelegate::SetProperty(Object* instance, std::string name, Variant value) {
+    void NodeJsOFDelegate::SetProperty(Object* instance, std::string name, Variant value) {
         Handle handle = instance->GetHandle();
         auto it = objects_.find(handle.raw_handle);
         if (it != objects_.end()) {
@@ -41,7 +41,7 @@ namespace arctic {
         }
     }
 
-    MaybeError<Variant> NodeJsObjectFactoryDelegate::Invoke(Object* instance, std::string method) {
+    MaybeError<Variant> NodeJsOFDelegate::Invoke(Object* instance, std::string method) {
         Handle handle = instance->GetHandle();
         auto it = objects_.find(handle.raw_handle);
         if (it != objects_.end()) {
@@ -60,7 +60,7 @@ namespace arctic {
         return MaybeError<Variant>();
     }
 
-    MaybeError<Variant> NodeJsObjectFactoryDelegate::Invoke(Object* instance, std::string method, std::vector<NamedVariant> params) {
+    MaybeError<Variant> NodeJsOFDelegate::Invoke(Object* instance, std::string method, std::vector<NamedVariant> params) {
         Handle handle = instance->GetHandle();
         auto it = objects_.find(handle.raw_handle);
         if (it != objects_.end()) {
@@ -84,7 +84,7 @@ namespace arctic {
         return MaybeError<Variant>();
     }
 
-    uint64_t NodeJsObjectFactoryDelegate::RegisterObject(Napi::Object obj) {
+    uint64_t NodeJsOFDelegate::RegisterObject(Napi::Object obj) {
         Napi::ObjectReference* ref = new Napi::ObjectReference();
         *ref = Napi::Weak(obj);
         uint64_t handle = ++next_handle_;
@@ -92,7 +92,7 @@ namespace arctic {
         return handle;
     }
 
-    Napi::Object NodeJsObjectFactoryDelegate::FindObject(uint64_t handle) {
+    Napi::Object NodeJsOFDelegate::FindObject(uint64_t handle) {
         auto it = objects_.find(handle);
         if (it != objects_.end()) {
             return it->second->Value();
