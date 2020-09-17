@@ -11,13 +11,12 @@ namespace arctic {
     public:
         static Napi::Object Init(Napi::Env env, Napi::Object exports);
         NAgent(const Napi::CallbackInfo& info);
-        virtual ~NAgent() {};
 
         static Napi::Object CreateHostAgent(const Napi::CallbackInfo& info, std::string& module_path);
         static Napi::Object CreateClientAgent(const Napi::CallbackInfo& info, std::string& module_path);
 
     private:
-        static void IdleTask(uv_idle_t* idle);
+        static void IdleTask(uv_timer_t* idle);
 
         void InstallIdleTask();
 
@@ -30,11 +29,7 @@ namespace arctic {
 
         Napi::Value GetRoutingId(const Napi::CallbackInfo& info);
 
-        void InstallNodeJsObjectFactoryDelegate();
-
-        void Finalize(Napi::Env env) override;
-
-        uv_idle_t* main_loop_handle_;
+        uv_timer_t* main_loop_handle_;
 
         NodeJsOFDelegate* object_factory_delegate_;
         Agent* agent_;

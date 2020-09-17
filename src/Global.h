@@ -10,14 +10,21 @@
 
 #include <napi.h>
 #include <uv.h>
+
+#include "Agent.h"
 #include "Arctic.h"
+#include "NodeJsOFDelegate.h"
 
 namespace arctic {
 
     class AddonInstanceContext {
     public:
-        AddonInstanceContext() {};
-        virtual ~AddonInstanceContext() {};
+        AddonInstanceContext() : of_delegate_(nullptr) {};
+        virtual ~AddonInstanceContext() {
+            if (agent_) {
+                agent_->Stop();
+            }
+        };
 
         void AddConstructor(std::string name, Napi::FunctionReference* ref) {
             if (ref == nullptr) {
@@ -34,8 +41,30 @@ namespace arctic {
             return it->second.get();
         }
 
+        void SetAgent(Agent* agent) {
+            agent_ = std::unique_ptr<Agent>(agent);
+        }
+
+        Agent* GetAgent() {
+            return agent_.get();
+        }
+
+        void InstallNodeJsObjectFactoryDelegate() {
+            of_delegate_ = new NodeJsOFDelegate();
+            ObjectFactory* object_factory = agent_->GetObjectFactory();
+            object_factory->AddDelegate(of_delegate_);
+        }
+
+        NodeJsOFDelegate* GetOFDelegate() {
+            return of_delegate_;
+        }
+
     private:
         std::map<std::string, std::unique_ptr<Napi::FunctionReference>> constructors;
+
+        // Don't release it
+        NodeJsOFDelegate* of_delegate_;
+        std::unique_ptr<Agent> agent_;
     };
 
     inline Variant NapiValue2Variant(Napi::Value& value) {
