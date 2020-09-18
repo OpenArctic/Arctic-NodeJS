@@ -18,6 +18,15 @@
         "inc"
       ],
       "defines": [ "NAPI_DISABLE_CPP_EXCEPTIONS" ],
+      "configurations": {
+        "Release": {
+          "msvs_settings": {
+            "VCCLCompilerTool": {
+              "Optimization": 0
+            }
+          }
+        }
+      }
     }
   ]
 }

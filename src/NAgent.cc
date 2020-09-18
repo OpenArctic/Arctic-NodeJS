@@ -49,7 +49,9 @@ namespace arctic {
         Napi::Env env = info.Env();
 
         int ret = agent_->Start(true);
-        InstallIdleTask();
+        if (ret == 0) {
+            InstallIdleTask();
+        }
         return Napi::Number::New(env, ret);
     }
 
