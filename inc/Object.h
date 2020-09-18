@@ -89,6 +89,11 @@ namespace arctic {
 
         virtual bool IsLocal() = 0;
 
+        virtual void Delete() = 0;
+
+        virtual bool GetAvaliable() { return is_avaliable_; };
+        virtual void SetAvaliable(bool avl) { is_avaliable_ = avl; };
+
         virtual void AddDelegate(ObjectDelegate* delegate) = 0;
         virtual ObjectDelegate* GetDelegate() = 0;
 
@@ -101,5 +106,8 @@ namespace arctic {
         virtual void AddEventListener(ObjectEventListener* listener) = 0;
         virtual void RemoveEventListener(ObjectEventListener* listener) = 0;
         virtual void FireEvent(std::string event_type, std::vector<NamedVariant> params) = 0;
+
+    private:
+        bool is_avaliable_ = true;
     };
 }

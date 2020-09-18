@@ -31,7 +31,7 @@ namespace arctic {
         object_factory_delegate_(nullptr), main_loop_handle_(nullptr) {
     }
 
-    void NAgent::IdleTask(uv_timer_t* idle) {
+    void NAgent::IdleTask(uv_idle_t* idle) {
         Agent* agent = (Agent*)(idle->data);
         if (agent != nullptr) {
             agent->WorkAtIdle();
@@ -39,10 +39,10 @@ namespace arctic {
     }
 
     void NAgent::InstallIdleTask() {
-        main_loop_handle_ = new uv_timer_t();
+        main_loop_handle_ = new uv_idle_t();
         main_loop_handle_->data = (void*)(agent_);
-        uv_timer_init(uv_default_loop(), main_loop_handle_);
-        uv_timer_start(main_loop_handle_, NAgent::IdleTask, 2000, 200);
+        uv_idle_init(uv_default_loop(), main_loop_handle_);
+        uv_idle_start(main_loop_handle_, NAgent::IdleTask);
     }
 
     Napi::Value NAgent::Start(const Napi::CallbackInfo& info) {
@@ -57,7 +57,7 @@ namespace arctic {
     {
         agent_->Stop();
         if (main_loop_handle_) {
-            uv_timer_stop(main_loop_handle_);
+            uv_idle_stop(main_loop_handle_);
             main_loop_handle_ = nullptr;
         }
         return Napi::Value();
@@ -94,8 +94,13 @@ namespace arctic {
             Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
             // Actually not blocked
             Object* instance = agent_->Find(routing_id, id).get();
-            Napi::Object obj = NObject::NewInstance(env, instance);
-            deferred.Resolve(obj);
+            if (instance != nullptr) {
+                Napi::Object obj = NObject::NewInstance(env, instance);
+                deferred.Resolve(obj);
+            }
+            else {
+                deferred.Resolve(env.Undefined());
+            }
             return deferred.Promise();
         }
         else {

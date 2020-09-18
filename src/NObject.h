@@ -40,9 +40,6 @@ namespace arctic {
         Napi::Value FireEvent(const Napi::CallbackInfo& info);
 
     private:
-
-        void Finalize(Napi::Env env) override;
-
         Object* native_;
 
         std::vector<EventHandler*> event_listeners_;

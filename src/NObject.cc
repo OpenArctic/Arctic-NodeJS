@@ -201,13 +201,4 @@ namespace arctic {
         native_->FireEvent(event_type, params);
         return Napi::Value();
     }
-
-    void NObject::Finalize(Napi::Env env) {
-        for (auto it = event_listeners_.begin(); it != event_listeners_.end(); ++it) {
-            EventHandler* event_handler = *it;
-            delete event_handler;
-        }
-        event_listeners_.clear();
-        delete native_;
-    }
 }

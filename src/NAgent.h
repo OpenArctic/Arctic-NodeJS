@@ -16,7 +16,7 @@ namespace arctic {
         static Napi::Object CreateClientAgent(const Napi::CallbackInfo& info, std::string& module_path);
 
     private:
-        static void IdleTask(uv_timer_t* idle);
+        static void IdleTask(uv_idle_t* idle);
 
         void InstallIdleTask();
 
@@ -29,7 +29,7 @@ namespace arctic {
 
         Napi::Value GetRoutingId(const Napi::CallbackInfo& info);
 
-        uv_timer_t* main_loop_handle_;
+        uv_idle_t* main_loop_handle_;
 
         NodeJsOFDelegate* object_factory_delegate_;
         Agent* agent_;

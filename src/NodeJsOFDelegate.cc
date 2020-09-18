@@ -95,7 +95,9 @@ namespace arctic {
     Napi::Object NodeJsOFDelegate::FindObject(uint64_t handle) {
         auto it = objects_.find(handle);
         if (it != objects_.end()) {
-            return it->second->Value();
+            if (!it->second->IsEmpty()) {
+                return it->second->Value();
+            }
         }
         return Napi::Object();
     }
