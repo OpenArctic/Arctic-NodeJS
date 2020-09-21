@@ -27,54 +27,35 @@ namespace arctic {
     }
 
     NAgent::NAgent(const Napi::CallbackInfo& info) :
-        Napi::ObjectWrap<NAgent>(info), agent_(nullptr),
-        object_factory_delegate_(nullptr), main_loop_handle_(nullptr) {
-    }
-
-    void NAgent::IdleTask(uv_idle_t* idle) {
-        Agent* agent = (Agent*)(idle->data);
-        if (agent != nullptr) {
-            agent->WorkAtIdle();
-        }
-    }
-
-    void NAgent::InstallIdleTask() {
-        main_loop_handle_ = new uv_idle_t();
-        main_loop_handle_->data = (void*)(agent_);
-        uv_idle_init(uv_default_loop(), main_loop_handle_);
-        uv_idle_start(main_loop_handle_, NAgent::IdleTask);
+        Napi::ObjectWrap<NAgent>(info), agent_(nullptr) {
     }
 
     Napi::Value NAgent::Start(const Napi::CallbackInfo& info) {
         Napi::Env env = info.Env();
 
         int ret = agent_->Start(true);
-        if (ret == 0) {
-            InstallIdleTask();
-        }
         return Napi::Number::New(env, ret);
     }
 
     Napi::Value NAgent::Stop(const Napi::CallbackInfo& info)
     {
         agent_->Stop();
-        if (main_loop_handle_) {
-            uv_idle_stop(main_loop_handle_);
-            main_loop_handle_ = nullptr;
-        }
         return Napi::Value();
     }
 
     Napi::Value NAgent::Export(const Napi::CallbackInfo& info)
     {
+        Napi::Env env = info.Env();
         Napi::String id_ = info[0].As<Napi::String>();
         std::string id = id_.Utf8Value();
         Napi::Object obj = info[1].As<Napi::Object>();
         if (obj.IsNull()) {
             return Napi::Value();
         }
-        uint64_t raw_handle = object_factory_delegate_->RegisterObject(obj);
-        Object* instance = agent_->GetObjectFactory()->Attach(object_factory_delegate_->GetType(), raw_handle);
+        AddonInstanceContext* ctx = env.GetInstanceData<AddonInstanceContext>();
+        NodeJsOFDelegate* object_factory_delegate = ctx->GetOFDelegate();
+        uint64_t raw_handle = object_factory_delegate->RegisterObject(obj);
+        Object* instance = agent_->GetObjectFactory()->Attach(object_factory_delegate->GetType(), raw_handle);
         agent_->Export(id, instance);
         return Napi::Value();
     }
@@ -152,7 +133,6 @@ namespace arctic {
             }
         }
         instance->agent_ = ctx->GetAgent();
-        instance->object_factory_delegate_ = ctx->GetOFDelegate();
         return obj;
     }
 
@@ -177,7 +157,6 @@ namespace arctic {
             }
         }
         instance->agent_ = ctx->GetAgent();
-        instance->object_factory_delegate_ = ctx->GetOFDelegate();
         return obj;
     }
 }

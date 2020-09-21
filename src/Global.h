@@ -20,7 +20,10 @@ namespace arctic {
     class AddonInstanceContext {
     public:
         AddonInstanceContext() : of_delegate_(nullptr) {};
+
+        // Stop
         virtual ~AddonInstanceContext() {
+            RemoveIdleTask();
             if (agent_) {
                 agent_->Stop();
             }
@@ -41,8 +44,14 @@ namespace arctic {
             return it->second.get();
         }
 
+        // Start
         void SetAgent(Agent* agent) {
+            if (agent_ != nullptr) {
+                return;
+            }
             agent_ = std::unique_ptr<Agent>(agent);
+            InstallNodeJsObjectFactoryDelegate();
+            InstallIdleTask();
         }
 
         Agent* GetAgent() {
@@ -50,6 +59,9 @@ namespace arctic {
         }
 
         void InstallNodeJsObjectFactoryDelegate() {
+            if (of_delegate_ != nullptr) {
+                return;
+            }
             of_delegate_ = new NodeJsOFDelegate();
             ObjectFactory* object_factory = agent_->GetObjectFactory();
             object_factory->AddDelegate(of_delegate_);
@@ -60,11 +72,36 @@ namespace arctic {
         }
 
     private:
+        static void IdleTask(uv_idle_t* idle) {
+            Agent* agent = (Agent*)(idle->data);
+            if (agent != nullptr) {
+                agent->WorkAtIdle();
+            }
+        }
+
+        void RemoveIdleTask() {
+            if (main_loop_handle_) {
+                uv_idle_stop(main_loop_handle_.get());
+                main_loop_handle_ = nullptr;
+            }
+        }
+
+        void InstallIdleTask() {
+            if (main_loop_handle_ != nullptr) {
+                return;
+            }
+            main_loop_handle_ = std::make_unique<uv_idle_t>();
+            main_loop_handle_->data = (void*)(agent_.get());
+            uv_idle_init(uv_default_loop(), main_loop_handle_.get());
+            uv_idle_start(main_loop_handle_.get(), AddonInstanceContext::IdleTask);
+        }
+
         std::map<std::string, std::unique_ptr<Napi::FunctionReference>> constructors;
 
         // Don't release it
         NodeJsOFDelegate* of_delegate_;
         std::unique_ptr<Agent> agent_;
+        std::unique_ptr<uv_idle_t> main_loop_handle_;
     };
 
     inline Variant NapiValue2Variant(Napi::Value& value) {
