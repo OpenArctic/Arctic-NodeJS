@@ -23,11 +23,13 @@ namespace arctic {
 
         // Stop
         virtual ~AddonInstanceContext() {
-            RemoveIdleTask();
-            if (agent_) {
-                agent_->Stop();
-            }
         };
+
+        static void Finalizer(Napi::Env env, AddonInstanceContext* ctx) {
+            ctx->RemoveIdleTask();
+            ctx->StopAgent();
+            delete ctx;
+        }
 
         void AddConstructor(std::string name, Napi::FunctionReference* ref) {
             if (ref == nullptr) {
@@ -76,6 +78,12 @@ namespace arctic {
             Agent* agent = (Agent*)(idle->data);
             if (agent != nullptr) {
                 agent->WorkAtIdle();
+            }
+        }
+
+        void StopAgent() {
+            if (agent_) {
+                agent_->Stop();
             }
         }
 

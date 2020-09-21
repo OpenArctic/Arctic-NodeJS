@@ -20,7 +20,7 @@ namespace arctic {
         AddonInstanceContext* ctx = env.GetInstanceData<AddonInstanceContext>();
         if (ctx == nullptr) {
             ctx = new AddonInstanceContext();
-            env.SetInstanceData(ctx);
+            env.SetInstanceData<AddonInstanceContext, AddonInstanceContext::Finalizer>(ctx);
         }
         ctx->AddConstructor("NAgent", ref);
         return exports;
